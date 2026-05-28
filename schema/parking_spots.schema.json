@@ -1,0 +1,72 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/matrosovcmtn/moscow-parking-occupancy/schema/parking_spots.schema.json",
+  "title": "ParkingSpot",
+  "description": "Static metadata of one Moscow municipal parking lot.",
+  "type": "object",
+  "required": ["id", "external_id", "latitude", "longitude", "total_spaces"],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Stable internal id used for joins with parking_occupancy.parking_id."
+    },
+    "external_id": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Original id from the upstream Moscow source. Useful to reconcile with upstream."
+    },
+    "name_ru": {
+      "type": ["string", "null"],
+      "description": "Russian display name of the parking lot."
+    },
+    "name_en": {
+      "type": ["string", "null"],
+      "description": "English display name of the parking lot."
+    },
+    "address_street_ru": {
+      "type": ["string", "null"],
+      "description": "Street address in Russian."
+    },
+    "address_street_en": {
+      "type": ["string", "null"],
+      "description": "Street address in English."
+    },
+    "subway_ru": {
+      "type": ["string", "null"],
+      "description": "Nearest metro station (Russian)."
+    },
+    "subway_en": {
+      "type": ["string", "null"],
+      "description": "Nearest metro station (English)."
+    },
+    "latitude": {
+      "type": "number",
+      "minimum": 55.0,
+      "maximum": 56.5,
+      "description": "WGS-84 latitude of the parking lot. Bounded to the Moscow metro region."
+    },
+    "longitude": {
+      "type": "number",
+      "minimum": 36.5,
+      "maximum": 38.5,
+      "description": "WGS-84 longitude of the parking lot. Bounded to the Moscow metro region."
+    },
+    "total_spaces": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Total parking capacity (common + handicapped)."
+    },
+    "common_spaces": {
+      "type": ["integer", "null"],
+      "minimum": 0,
+      "description": "Standard parking spaces."
+    },
+    "handicapped_spaces": {
+      "type": ["integer", "null"],
+      "minimum": 0,
+      "description": "Accessible parking spaces reserved for disabled drivers."
+    }
+  }
+}

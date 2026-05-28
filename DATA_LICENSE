@@ -1,0 +1,66 @@
+Data License — Moscow Parking Occupancy Dataset
+
+The data files in the `data/` directory of this repository (the "Dataset")
+are licensed to you under the
+
+    Creative Commons Attribution 4.0 International License (CC BY 4.0)
+
+A human-readable summary of the license is available at:
+    https://creativecommons.org/licenses/by/4.0/
+
+The full legal text is at:
+    https://creativecommons.org/licenses/by/4.0/legalcode
+
+================================================================================
+Attribution requirement
+================================================================================
+
+You are free to share and adapt the Dataset for any purpose, including
+commercial use, provided you give appropriate credit. To satisfy the
+attribution requirement when redistributing or building on this Dataset,
+include the following notice:
+
+    "Moscow Parking Occupancy Dataset, compiled by Danil Matrosov / ParkOut
+     (https://github.com/matrosovcmtn/moscow-parking-occupancy), derived from
+     public Moscow Department of Transport parking data,
+     licensed under CC BY 4.0."
+
+================================================================================
+Source data attribution
+================================================================================
+
+The occupancy values in this Dataset are obtained from publicly accessible
+Moscow Department of Transport parking data.
+
+This Dataset is a derivative work: timestamps, parking metadata, and
+occupancy snapshots have been collected, normalised, deduplicated, and
+restructured for analytical use. The original source data is the property
+of the Government of Moscow and is published under their own open data
+terms.
+
+When using this Dataset for purposes that may be sensitive (commercial
+products, redistribution under a different license, regulated industries,
+or large-scale republication), you should independently verify the current
+terms of service of the upstream source, as those terms may have been
+updated after this Dataset was produced.
+
+================================================================================
+What this Dataset does NOT cover
+================================================================================
+
+- Predictions: this Dataset contains observed occupancy only. Any predictions
+  produced by ParkOut's ML service are NOT included and are NOT licensed
+  under CC BY 4.0.
+- Code: the export scripts and example notebooks in this repository are
+  licensed under MIT — see ./LICENSE.
+- Trademarks: "ParkOut" is not licensed for use under either license. Do not
+  use the name "ParkOut" to imply endorsement of derived works.
+
+================================================================================
+No warranty
+================================================================================
+
+This Dataset is provided "as is", without warranty of any kind, express or
+implied. The compilers of this Dataset make no representations about the
+accuracy, completeness, or fitness for any particular purpose of the data.
+Use at your own risk.

@@ -1,0 +1,36 @@
+# Local environment
+.env
+.env.*
+!.env.example
+.venv/
+venv/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editors
+.idea/
+.vscode/
+*.swp
+
+# Jupyter
+.ipynb_checkpoints/
+*-checkpoint.ipynb
+
+# Local scratch outputs (NOT the released parquet shards in data/)
+data/raw_dump/
+data/_tmp/
+data/*.csv.gz
+data/scratch_*.parquet
+
+# Logs
+*.log
+logs/

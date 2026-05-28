@@ -1,0 +1,37 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/matrosovcmtn/moscow-parking-occupancy/schema/occupancy.schema.json",
+  "title": "OccupancySnapshot",
+  "description": "One 30-minute snapshot of free-space counts for a single parking lot.",
+  "type": "object",
+  "required": ["time", "parking_id"],
+  "additionalProperties": false,
+  "properties": {
+    "time": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Snapshot timestamp in UTC (ISO 8601). Snapshots are roughly evenly spaced at 30-minute intervals with up to ~1 minute jitter."
+    },
+    "parking_id": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Foreign key to parking_spots.id."
+    },
+    "free_spaces": {
+      "type": ["integer", "null"],
+      "minimum": 0,
+      "description": "Number of free spaces reported by the upstream API at this moment."
+    },
+    "free_handicapped_spaces": {
+      "type": ["integer", "null"],
+      "minimum": 0,
+      "description": "Number of free accessible spaces."
+    },
+    "occupancy_rate": {
+      "type": ["number", "null"],
+      "minimum": 0.0,
+      "maximum": 100.0,
+      "description": "Percent (0–100) of *common* (non-accessible) spaces occupied at this moment, computed by the collector as (common_total - common_free) / common_total * 100, where common_total is the declared capacity for regular spaces only (excluding handicapped). NOTE: this is NOT 1 - free_spaces / total_spaces — that computation would also include handicapped spaces in the denominator. Use free_spaces / total_spaces for the all-inclusive ratio."
+    }
+  }
+}
