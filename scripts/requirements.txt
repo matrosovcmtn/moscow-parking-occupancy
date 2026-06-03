@@ -1,4 +1,7 @@
 pandas>=2.0
+# numpy<2 keeps the dataset buildable on older x86 CPUs without SSE4.2 / X86_V2
+# (NumPy 2.x raises ImportError on such hosts). Lift this pin if you only run on modern CPUs.
+numpy<2
 pyarrow>=14.0
 psycopg[binary]>=3.1
 python-dateutil>=2.8

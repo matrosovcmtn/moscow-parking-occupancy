@@ -38,7 +38,7 @@ UNTIL=$(date -u -d "${NOW_YEAR}-${NOW_MONTH}-01 +1 month" +%F 2>/dev/null \
 
 echo "  exporting range $SINCE → $UNTIL"
 
-python3 scripts/export_from_db.py \
+"$REPO_DIR/.venv/bin/python" "$REPO_DIR/scripts/export_from_db.py" \
     --db-url "$DATABASE_URL" \
     --output-dir "$REPO_DIR/data" \
     --since "$SINCE" \
@@ -47,7 +47,7 @@ python3 scripts/export_from_db.py \
 
 # Re-export parking_spots only once per week — they almost never change,
 # but a refresh on Mondays keeps us honest about adds/removes.
-python3 scripts/export_from_db.py \
+"$REPO_DIR/.venv/bin/python" "$REPO_DIR/scripts/export_from_db.py" \
     --db-url "$DATABASE_URL" \
     --output-dir "$REPO_DIR/data" \
     --since "$SINCE" \
