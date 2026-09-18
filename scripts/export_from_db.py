@@ -40,6 +40,11 @@ from dateutil.relativedelta import relativedelta
 
 LOG = logging.getLogger("export_from_db")
 
+# С 18.09.2026 в parking_spots не только Москва (появилась колонка city).
+# Датасет называется moscow-parking-occupancy и документирован как московский,
+# поэтому выгружаем ровно один город, а не всё, что есть в базе.
+DATASET_CITY = "moscow"
+
 PARKING_SPOTS_SQL = """
 SELECT
     id,
@@ -56,6 +61,7 @@ SELECT
     common_spaces,
     handicapped_spaces
 FROM parking_spots
+WHERE city = %(city)s
 ORDER BY id
 """
 
@@ -68,6 +74,7 @@ SELECT
     occupancy_rate
 FROM parking_occupancy
 WHERE time >= %(start)s AND time < %(end)s
+  AND parking_id IN (SELECT id FROM parking_spots WHERE city = %(city)s)
 ORDER BY time, parking_id
 """
 
@@ -94,7 +101,7 @@ def iter_months(since: datetime, until: datetime) -> Iterator[MonthRange]:
 
 def export_parking_spots(conn: psycopg.Connection, output: Path) -> int:
     LOG.info("Exporting parking_spots → %s", output)
-    df = pd.read_sql(PARKING_SPOTS_SQL, conn)
+    df = pd.read_sql(PARKING_SPOTS_SQL, conn, params={"city": DATASET_CITY})
     df = df.astype(
         {
             "id": "int32",
@@ -126,7 +133,7 @@ def export_occupancy_month(
     df = pd.read_sql(
         OCCUPANCY_SQL,
         conn,
-        params={"start": month.start, "end": month.end},
+        params={"start": month.start, "end": month.end, "city": DATASET_CITY},
     )
 
     if df.empty:
@@ -221,7 +228,11 @@ def main() -> int:
         # Auto-detect range if user didn't specify
         if args.since is None or args.until is None:
             with conn.cursor() as cur:
-                cur.execute("SELECT MIN(time), MAX(time) FROM parking_occupancy")
+                cur.execute(
+                    "SELECT MIN(time), MAX(time) FROM parking_occupancy "
+                    "WHERE parking_id IN (SELECT id FROM parking_spots WHERE city = %s)",
+                    (DATASET_CITY,),
+                )
                 row = cur.fetchone()
                 if not row or row[0] is None:
                     LOG.error("parking_occupancy is empty")
