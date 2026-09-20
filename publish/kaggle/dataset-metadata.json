@@ -1,8 +1,12 @@
 {
   "title": "Moscow Parking Occupancy: 4.6M half-hourly snapshots",
-  "id": "matrosovcmtn/moscow-parking-occupancy",
+  "id": "danilmatrosov/moscow-parking-occupancy",
   "subtitle": "210 municipal parking lots, 30-minute granularity, continuous since March 2025",
-  "licenses": [{ "name": "CC-BY-4.0" }],
+  "licenses": [
+    {
+      "name": "CC-BY-4.0"
+    }
+  ],
   "keywords": [
     "transportation",
     "cities",
@@ -13,11 +17,12 @@
   "resources": [
     {
       "path": "parking_spots.parquet",
-      "description": "Static metadata for 210 municipal parking lots: name, address, nearest metro, WGS-84 coordinates, total/common/accessible capacity."
+      "description": "Static metadata for 210 municipal parking lots: name, address, nearest metro, WGS-84 coordinates, total/common/accessible capacity as declared today, plus last_free_at and feed_silent marking lots whose occupancy the city does not publish."
     },
     {
       "path": "occupancy.parquet",
-      "description": "Occupancy snapshots every 30 minutes: time (UTC), parking_id, free_spaces, free_handicapped_spaces, occupancy_rate (0-100, computed over common spaces only)."
+      "description": "Occupancy snapshots every 30 minutes: time (UTC), parking_id, free_spaces (common pool only), free_handicapped_spaces, occupancy_rate (percent of common spaces occupied, normally 0-100 but negative in 0.42% of rows - see README)."
     }
-  ]
+  ],
+  "_comment": "Справочный файл: публикация идёт через publish/kaggle_upload.py, который этот json не читает. Описания файлов и колонок Kaggle принимает только из веб-интерфейса — через API поле data возвращает 201 и молча отбрасывается."
 }
