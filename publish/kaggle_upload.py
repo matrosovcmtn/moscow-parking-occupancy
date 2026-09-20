@@ -2,7 +2,7 @@
 """Публикация датасета на Kaggle с полными метаданными.
 
 Запуск:
-    KAGGLE_API_TOKEN=KGAT_... KAGGLE_OWNER=<логин> python3 publish/kaggle_upload.py
+    KAGGLE_API_TOKEN=KGAT_... python3 publish/kaggle_upload.py
 
 Три грабли, на которые здесь уже наступили:
 
@@ -46,12 +46,10 @@ class _BearerAuth(requests.auth.AuthBase):
 
 def main() -> int:
     token = os.environ.get("KAGGLE_API_TOKEN")
-    owner = os.environ.get("KAGGLE_OWNER")
+    # Логин на Kaggle не совпадает ни с GitHub, ни с Hugging Face.
+    owner = os.environ.get("KAGGLE_OWNER", "danilmatrosov")
     if not token:
         print("не задан KAGGLE_API_TOKEN", file=sys.stderr)
-        return 2
-    if not owner:
-        print("не задан KAGGLE_OWNER — это логин на Kaggle, не на GitHub", file=sys.stderr)
         return 2
 
     KaggleApiV1Client._get_auth = lambda self: _BearerAuth(token)  # type: ignore[method-assign]

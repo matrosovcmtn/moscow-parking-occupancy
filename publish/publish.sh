@@ -2,8 +2,13 @@
 #
 # Публикация датасета на Kaggle и Hugging Face.
 #
-#   KAGGLE_API_TOKEN=KGAT_… KAGGLE_OWNER=<логин> ./publish/publish.sh kaggle
-#   HF_TOKEN=hf_…                                ./publish/publish.sh hf
+#   KAGGLE_API_TOKEN=KGAT_… ./publish/publish.sh kaggle
+#   HF_TOKEN=hf_…            ./publish/publish.sh hf
+#
+# Логины у всех трёх площадок разные, поэтому зашиты значениями по умолчанию:
+#   GitHub        matrosovcmtn
+#   Kaggle        danilmatrosov   (KAGGLE_OWNER)
+#   Hugging Face  matrosovdani    (HF_OWNER)
 #
 # GitHub остаётся каноническим источником: обе площадки — зеркала, которые
 # нужны только для находимости. Перезаливать их достаточно раз в месяц,
@@ -19,7 +24,6 @@ die() { printf '\033[31m%s\033[0m\n' "$*" >&2; exit 1; }
 case "$TARGET" in
 kaggle)
     [ -n "${KAGGLE_API_TOKEN:-}" ] || die "не задан KAGGLE_API_TOKEN"
-    [ -n "${KAGGLE_OWNER:-}" ] || die "не задан KAGGLE_OWNER (логин на Kaggle, не на GitHub)"
     python3 -c 'import kagglehub, pandas, pyarrow' 2>/dev/null \
         || die "нужны пакеты: pip install kagglehub pandas pyarrow"
 
@@ -38,7 +42,8 @@ pd.read_parquet(f"{repo}/data/parking_spots.parquet").to_parquet(
 print(f"  склеено {len(files)} месяцев, {len(df):,} строк")
 PY
 
-    KAGGLE_UPLOAD_DIR="$STAGE" python3 "$REPO_DIR/publish/kaggle_upload.py"
+    KAGGLE_UPLOAD_DIR="$STAGE" KAGGLE_OWNER="${KAGGLE_OWNER:-danilmatrosov}" \
+        python3 "$REPO_DIR/publish/kaggle_upload.py"
     rm -rf "$STAGE"
     ;;
 
@@ -51,7 +56,7 @@ import os, sys
 from huggingface_hub import HfApi
 repo_dir = sys.argv[1]
 api = HfApi(token=os.environ["HF_TOKEN"])
-repo_id = f"{os.environ.get('HF_OWNER', 'matrosovcmtn')}/moscow-parking-occupancy"
+repo_id = f"{os.environ.get('HF_OWNER', 'matrosovdani')}/moscow-parking-occupancy"
 
 api.create_repo(repo_id, repo_type="dataset", exist_ok=True)
 # Карточка датасета: YAML-шапка включает встроенный просмотрщик HF.

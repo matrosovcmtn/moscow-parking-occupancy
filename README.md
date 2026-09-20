@@ -5,6 +5,8 @@
 
 [![License: CC BY 4.0](https://img.shields.io/badge/Data%20License-CC%20BY%204.0-lightgrey.svg)](./LICENSE)
 [![License: MIT](https://img.shields.io/badge/Code%20License-MIT-yellow.svg)](./LICENSE-CODE)
+[![Kaggle](https://img.shields.io/badge/Kaggle-dataset-20BEFF.svg)](https://www.kaggle.com/datasets/danilmatrosov/moscow-parking-occupancy)
+[![Hugging Face](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-dataset-FFD21E.svg)](https://huggingface.co/datasets/matrosovdani/moscow-parking-occupancy)
 
 ---
 
@@ -133,6 +135,21 @@ df = con.execute("""
     LIMIT  20
 """).df()
 ```
+
+---
+
+## Mirrors
+
+The canonical source is this repository. The same data is mirrored for
+discoverability:
+
+- **Kaggle** — https://www.kaggle.com/datasets/danilmatrosov/moscow-parking-occupancy
+  (monthly files merged into one `occupancy.parquet`)
+- **Hugging Face** — https://huggingface.co/datasets/matrosovdani/moscow-parking-occupancy
+  (same monthly layout, loadable with `datasets`)
+
+Mirrors are refreshed manually via `publish/publish.sh`; only this repository
+updates weekly.
 
 ---
 
