@@ -88,20 +88,26 @@ planned for v1.1 — see [`CHANGELOG.md`](./CHANGELOG.md).
 |---|---|---|
 | `time` | timestamp\[ns, UTC\] | Snapshot timestamp (UTC) |
 | `parking_id` | int32 | Foreign key → `parking_spots.id` |
-| `free_spaces` | int32 | Total number of free spaces at this moment (common + handicapped) |
-| `free_handicapped_spaces` | int32 | Free accessible (handicapped) spaces |
-| `occupancy_rate` | float64 | Percent **0–100** of *common* spaces occupied. See note below. |
+| `free_spaces` | int32 | Free spaces in the *common* (non-accessible) pool |
+| `free_handicapped_spaces` | int32 | Free accessible (handicapped) spaces. Least reliable column — see quirks |
+| `occupancy_rate` | float64 | Percent of *common* spaces occupied, normally 0–100. See note below. |
 
 > **Important — `occupancy_rate` semantics.** The collector computes this as
 > `(common_total - common_free) / common_total * 100` using the **declared
-> `common_spaces` capacity only** (i.e. excluding handicapped spots). It is
-> *not* the same as `1 - free_spaces / total_spaces`, which would mix common
-> and handicapped spaces together. If you want the all-inclusive ratio,
-> compute it yourself:
+> `common_spaces` capacity only** (i.e. excluding handicapped spots), where
+> `common_total` is the capacity declared *at the time of the snapshot* — not
+> necessarily today's. It is *not* the same as `1 - free_spaces / total_spaces`,
+> which would mix common and handicapped spaces together. If you want the
+> all-inclusive ratio, compute it yourself:
 >
 > ```python
 > df["overall_occupancy"] = 1 - df["free_spaces"] / spots["total_spaces"]
 > ```
+>
+> `free_spaces` and `free_handicapped_spaces` are two independent upstream
+> counters, not a total and one of its parts: `free_spaces` is smaller than
+> `free_handicapped_spaces` in 6.8% of rows. Read *Known quirks in the numbers
+> themselves* before using either as a bounded count.
 
 Primary key: `(time, parking_id)`. Source poll interval: 30 minutes ± 1 min jitter.
 
@@ -191,10 +197,51 @@ occ   = occ[occ.parking_id.isin(live)]          # drops ~4.8% of rows
 `last_free_at` lets you rebuild the flag for any as-of date rather than
 trusting ours: a lot is silent from the moment it stops appearing there.
 
-**Separately — the data is censored at the boundaries.** 25.2% of all rows are
-exactly 100 and 7.8% are exactly 0, and most of that is genuine: lots really
+**Separately — the data is censored at the boundaries.** 25.3% of all rows are
+exactly 100 and 7.4% are exactly 0, and most of that is genuine: lots really
 do fill up. A plain regression will be biased at the edges; treat the target
 as bounded.
+
+---
+
+## Known quirks in the numbers themselves
+
+Three things will mislead you if you take the columns at face value. Every
+figure below is measured on the current release (4,684,084 rows).
+
+**1. `occupancy_rate` goes below zero in 19,792 rows (0.42%).** The minimum is
+−1000. They sit in 27 lots between 18 May and 9 December 2025 and nowhere else.
+Before January 2026 the collector computed the percentage without clamping the
+free-space count to the declared capacity, so whenever the city reported more
+free spaces than a lot officially has, the percentage went negative. The clamp
+was added in January 2026 and no later row is affected. The underlying
+`free_spaces` values are untouched, so nothing is lost:
+
+```python
+occ = occ[occ.occupancy_rate >= 0]           # drops 0.42% of rows
+```
+
+**2. You cannot recompute `occupancy_rate` from `parking_spots`.** Its
+denominator is the capacity the city declared *at the moment of the snapshot*,
+while `parking_spots.common_spaces` carries only today's value. 74 of the 190
+lots that ever report a partial occupancy re-declared their capacity at least
+once over the 19 months — one moved between 26 and 300 spaces. Recomputing the
+history against today's capacity reproduces between 73% and 98% of the rows
+depending on the month, and the stored value is the correct one. If you need
+the denominator for a given row, recover it from the row itself:
+
+```python
+# exact for every row with 0 < occupancy_rate < 100
+declared = free_spaces / (1 - occupancy_rate / 100)
+```
+
+**3. The accessible-space counter emits garbage.** `free_handicapped_spaces`
+exceeds the lot's declared accessible capacity in 94,435 rows (2.0%, 36 lots)
+and peaks at 9,979 free accessible spaces in a lot that declares 2 — lot 71, on
+17 June 2026. `free_spaces` likewise exceeds the declared common capacity in
+116,327 rows (2.5%, 55 lots). This is what the upstream API published; we keep
+it rather than silently repairing it, but neither column is bounded by the
+capacity columns in `parking_spots`.
 
 ---
 

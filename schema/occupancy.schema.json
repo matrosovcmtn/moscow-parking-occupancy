@@ -4,7 +4,10 @@
   "title": "OccupancySnapshot",
   "description": "One 30-minute snapshot of free-space counts for a single parking lot.",
   "type": "object",
-  "required": ["time", "parking_id"],
+  "required": [
+    "time",
+    "parking_id"
+  ],
   "additionalProperties": false,
   "properties": {
     "time": {
@@ -18,20 +21,29 @@
       "description": "Foreign key to parking_spots.id."
     },
     "free_spaces": {
-      "type": ["integer", "null"],
+      "type": [
+        "integer",
+        "null"
+      ],
       "minimum": 0,
-      "description": "Number of free spaces reported by the upstream API at this moment."
+      "description": "Number of free spaces reported by the upstream API at this moment (the common, non-accessible pool). Not bounded by parking_spots.common_spaces: it exceeds the declared capacity in 116,327 rows (2.5%, 55 lots), either because capacity was re-declared later or because the upstream counter glitched. Preserved as published."
     },
     "free_handicapped_spaces": {
-      "type": ["integer", "null"],
+      "type": [
+        "integer",
+        "null"
+      ],
       "minimum": 0,
-      "description": "Number of free accessible spaces."
+      "description": "Number of free accessible spaces reported by the upstream API. This counter is the least reliable column in the dataset: it exceeds the declared accessible capacity in 94,435 rows (2.0%, 36 lots) and peaks at 9,979 free accessible spaces in a lot that declares 2 (lot 71, 17 June 2026). Preserved as published - do not treat it as bounded by handicapped_spaces."
     },
     "occupancy_rate": {
-      "type": ["number", "null"],
-      "minimum": 0.0,
+      "type": [
+        "number",
+        "null"
+      ],
+      "minimum": -1000.0,
       "maximum": 100.0,
-      "description": "Percent (0–100) of *common* (non-accessible) spaces occupied at this moment, computed by the collector as (common_total - common_free) / common_total * 100, where common_total is the declared capacity for regular spaces only (excluding handicapped). NOTE: this is NOT 1 - free_spaces / total_spaces — that computation would also include handicapped spaces in the denominator. Use free_spaces / total_spaces for the all-inclusive ratio."
+      "description": "Percent of *common* (non-accessible) spaces occupied at this moment, computed by the collector as (common_total - common_free) / common_total * 100, where common_total is the capacity for regular spaces declared AT THE TIME OF THE SNAPSHOT (excluding handicapped). Normally 0-100, but 19,792 rows (0.42%, 27 lots, 18 May - 9 Dec 2025) are negative, down to -1000: before January 2026 the collector did not clamp common_free to common_total, so a lot reporting more free spaces than it officially has produced a negative percentage. No row after 9 Dec 2025 is affected. Filter occupancy_rate >= 0 for a clean scale. NOTE: this is NOT 1 - free_spaces / total_spaces - that computation would also include handicapped spaces in the denominator. It also cannot be recomputed from parking_spots.common_spaces, which carries only today declared capacity: 74 of 190 lots re-declared capacity over the 19 months."
     }
   }
 }

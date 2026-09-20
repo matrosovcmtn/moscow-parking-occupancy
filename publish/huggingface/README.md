@@ -53,12 +53,14 @@ spots = load_dataset("matrosovcmtn/moscow-parking-occupancy", "parking_spots", s
 |---|---|---|
 | `time` | timestamp[ns, UTC] | Snapshot timestamp |
 | `parking_id` | int32 | Foreign key to `parking_spots.id` |
-| `free_spaces` | int32 | Free spaces (common + accessible) |
-| `free_handicapped_spaces` | int32 | Free accessible spaces |
-| `occupancy_rate` | float64 | Percent 0–100 of **common** spaces occupied |
+| `free_spaces` | int32 | Free spaces in the **common** (non-accessible) pool |
+| `free_handicapped_spaces` | int32 | Free accessible spaces. Least reliable column — see quirks |
+| `occupancy_rate` | float64 | Percent of **common** spaces occupied, normally 0–100 |
 
 > `occupancy_rate` is computed as `(common_total - common_free) / common_total * 100`
-> over declared **common** capacity only — it is *not* `1 - free_spaces / total_spaces`.
+> over declared **common** capacity only, using the capacity in force at the time
+> of the snapshot — it is *not* `1 - free_spaces / total_spaces`. See *Known quirks*
+> below before treating any of these three columns as bounded.
 
 **`parking_spots`** — `id`, `external_id`, `name_ru`, `name_en`,
 `address_street_ru`, `address_street_en`, `subway_ru`, `subway_en`,
@@ -90,6 +92,41 @@ trusting ours.
 **Separately, the data is censored at the boundaries:** 25.2% of all rows are
 exactly 100 and 7.8% exactly 0 — mostly genuine, lots really do fill up.
 Treat the target as bounded.
+
+## Known quirks in the numbers themselves
+
+Measured on the current release (4,684,084 rows). Nothing here is cleaned - this
+is an observational archive - but none of it should surprise you.
+
+**1. `occupancy_rate` goes below zero in 19,792 rows (0.42%),** down to -1000.
+All of them sit in 27 lots between 18 May and 9 December 2025. Before January
+2026 the collector computed the percentage without clamping the free-space count
+to the declared capacity, so a lot reporting more free spaces than it officially
+has produced a negative percentage. The clamp landed in January 2026 and no later
+row is affected. `free_spaces` is untouched, so nothing is lost:
+
+```python
+occ = occ[occ.occupancy_rate >= 0]           # drops 0.42% of rows
+```
+
+**2. You cannot recompute `occupancy_rate` from `parking_spots`.** Its
+denominator is the capacity declared *at the moment of the snapshot*, while
+`parking_spots.common_spaces` carries only today's value. 74 of the 190 lots that
+ever report a partial occupancy re-declared capacity at least once over the 19
+months. Recover the denominator from the row itself instead:
+
+```python
+# exact for every row with 0 < occupancy_rate < 100
+declared = free_spaces / (1 - occupancy_rate / 100)
+```
+
+**3. The accessible-space counter emits garbage.** `free_handicapped_spaces`
+exceeds the declared accessible capacity in 94,435 rows (2.0%, 36 lots) and peaks
+at 9,979 free accessible spaces in a lot that declares 2. `free_spaces` exceeds
+the declared common capacity in 116,327 rows (2.5%, 55 lots), and is *smaller*
+than `free_handicapped_spaces` in 6.8% of rows - the two are independent upstream
+counters, not a total and one of its parts. Neither is bounded by the capacity
+columns.
 
 ## Caveats
 

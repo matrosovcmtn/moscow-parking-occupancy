@@ -45,6 +45,13 @@ LOG = logging.getLogger("export_from_db")
 # поэтому выгружаем ровно один город, а не всё, что есть в базе.
 DATASET_CITY = "moscow"
 
+# Подписи для сводки по аномалиям в конце прогона.
+LABELS = {
+    "rate_negative": "occupancy_rate below 0",
+    "rate_above_100": "occupancy_rate above 100",
+    "free_below_handicapped": "free_spaces < free_handicapped_spaces",
+}
+
 PARKING_SPOTS_SQL = """
 SELECT
     id,
@@ -134,7 +141,7 @@ def export_occupancy_month(
     conn: psycopg.Connection,
     month: MonthRange,
     output_dir: Path,
-) -> tuple[Path, int]:
+) -> tuple[Path, int, dict[str, int]]:
     output = output_dir / f"occupancy_{month.label}.parquet"
     LOG.info("Exporting occupancy %s → %s", month.label, output.name)
 
@@ -146,7 +153,7 @@ def export_occupancy_month(
 
     if df.empty:
         LOG.warning("  no rows for %s, skipping", month.label)
-        return output, 0
+        return output, 0, {}
 
     df["time"] = pd.to_datetime(df["time"], utc=True)
     df = df.astype(
@@ -157,12 +164,18 @@ def export_occupancy_month(
             "occupancy_rate": "float64",
         }
     )
-    # Validation: occupancy_rate is a percent 0-100 (common-spaces only),
-    # see schema/occupancy.schema.json for full semantics.
-    bad = df["occupancy_rate"].dropna()
-    bad = bad[(bad < 0) | (bad > 100)]
-    if not bad.empty:
-        LOG.warning("  %d rows have out-of-range occupancy_rate in %s", len(bad), month.label)
+    # Аномалии не чиним — это наблюдательный архив. Но и молчать про них нельзя:
+    # раньше здесь было одинокое LOG.warning, и 19 792 отрицательных процента
+    # пролежали в опубликованном датасете незамеченными несколько месяцев.
+    # Теперь счётчики едут наверх и печатаются сводкой в конце прогона.
+    rate = df["occupancy_rate"].dropna()
+    anomalies = {
+        "rate_negative": int((rate < 0).sum()),
+        "rate_above_100": int((rate > 100).sum()),
+        "free_below_handicapped": int(
+            (df["free_spaces"] < df["free_handicapped_spaces"]).sum()
+        ),
+    }
 
     table = pa.Table.from_pandas(df, preserve_index=False)
     pq.write_table(
@@ -175,7 +188,7 @@ def export_occupancy_month(
     )
     size_mb = output.stat().st_size / 1024 / 1024
     LOG.info("  wrote %d rows (%.2f MB)", len(df), size_mb)
-    return output, len(df)
+    return output, len(df), anomalies
 
 
 def parse_args() -> argparse.Namespace:
@@ -216,6 +229,19 @@ def parse_args() -> argparse.Namespace:
     return p.parse_args()
 
 
+def report_anomalies(totals: dict[str, int], total_rows: int) -> None:
+    """Печатает сводку по аномалиям: они остаются в данных, но не в тишине."""
+    found = {k: v for k, v in totals.items() if v}
+    if not found:
+        LOG.info("Data quirks: none found.")
+        return
+    LOG.warning("Data quirks left in the export on purpose (see README):")
+    for key, count in sorted(found.items(), key=lambda kv: -kv[1]):
+        share = count / total_rows * 100 if total_rows else 0.0
+        LOG.warning("  %-40s %9d rows (%.3f%%)", LABELS.get(key, key), count, share)
+    LOG.warning("  Documented in README section: Known quirks in the numbers themselves")
+
+
 def main() -> int:
     args = parse_args()
     logging.basicConfig(
@@ -254,11 +280,15 @@ def main() -> int:
         LOG.info("Date range: %s → %s", args.since.isoformat(), args.until.isoformat())
 
         total_rows = 0
+        totals: dict[str, int] = {}
         for month in iter_months(args.since, args.until):
-            _, rows = export_occupancy_month(conn, month, args.output_dir)
+            _, rows, anomalies = export_occupancy_month(conn, month, args.output_dir)
             total_rows += rows
+            for key, count in anomalies.items():
+                totals[key] = totals.get(key, 0) + count
 
     LOG.info("Done. %d occupancy rows exported across all months.", total_rows)
+    report_anomalies(totals, total_rows)
     return 0
 
 
