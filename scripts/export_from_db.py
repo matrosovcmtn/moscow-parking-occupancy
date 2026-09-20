@@ -59,8 +59,14 @@ SELECT
     longitude::float8 AS longitude,
     total_spaces,
     common_spaces,
-    handicapped_spaces
+    handicapped_spaces,
+    -- Часть парковок постоянно отдаёт ноль свободных мест. Это не «занято»,
+    -- а «город не передаёт занятость». Без пометки такие ряды выглядят как
+    -- совершенно полная парковка и портят любую модель, обученную на них.
+    h.last_free_at,
+    COALESCE(h.feed_silent, FALSE) AS feed_silent
 FROM parking_spots
+LEFT JOIN parking_feed_health h ON h.parking_id = parking_spots.id
 WHERE city = %(city)s
 ORDER BY id
 """
@@ -109,8 +115,10 @@ def export_parking_spots(conn: psycopg.Connection, output: Path) -> int:
             "total_spaces": "Int32",
             "common_spaces": "Int32",
             "handicapped_spaces": "Int32",
+            "feed_silent": "bool",
         }
     )
+    df["last_free_at"] = pd.to_datetime(df["last_free_at"], utc=True)
     table = pa.Table.from_pandas(df, preserve_index=False)
     pq.write_table(
         table,

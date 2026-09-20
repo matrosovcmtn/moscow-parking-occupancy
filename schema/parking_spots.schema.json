@@ -67,6 +67,15 @@
       "type": ["integer", "null"],
       "minimum": 0,
       "description": "Accessible parking spaces reserved for disabled drivers."
+    },
+    "last_free_at": {
+      "type": ["string", "null"],
+      "format": "date-time",
+      "description": "Last moment this lot reported at least one free space, UTC. Null means it never did, over the whole history."
+    },
+    "feed_silent": {
+      "type": "boolean",
+      "description": "True when the lot reported no free space at all over the last 30 days (with at least a week of samples). Such a lot is almost certainly NOT full: the city registered it but does not publish its occupancy, or the sensor died. Its occupancy_rate rows are a constant 100 and should normally be excluded from modelling."
     }
   }
 }

@@ -79,6 +79,8 @@ planned for v1.1 — see [`CHANGELOG.md`](./CHANGELOG.md).
 | `total_spaces` | int32 | Total capacity |
 | `common_spaces` | int32 | Standard spaces |
 | `handicapped_spaces` | int32 | Accessible spaces |
+| `last_free_at` | timestamp\[ns, UTC\] | Last moment this lot reported a free space. Null = never did |
+| `feed_silent` | bool | True when the lot has not reported a single free space in 30 days — read the warning below |
 
 ### `parking_occupancy`
 
@@ -159,6 +161,40 @@ This dataset is refreshed **every Monday at 04:00 UTC**. The most recent month f
 always partial and overwritten on each refresh; older months are append-only.
 
 See [`CHANGELOG.md`](./CHANGELOG.md) for the history of releases.
+
+---
+
+## Read this before modelling: 39 lots are not what they look like
+
+**19% of the Moscow lots report a constant zero free spaces.** That looks like
+"completely full". It is not — the city registered these lots but does not
+publish their occupancy, or their sensor died.
+
+Measured on 2026-09-20: 39 of 210 lots reported no free space at all in the
+previous 30 days. Nineteen of them never reported one in the entire history
+(eighteen were added to the city registry after collection had started). The
+other twenty did once and then went quiet — one 257-space lot last showed a
+free space in May 2026, one 143-space lot at VDNKh in July 2025. A 606-space
+lot does not stay full for five months.
+
+Left in the data on purpose — this is an observational archive, and knowing
+which feeds are dead is itself useful. But `occupancy_rate` for these lots is
+a constant 100 that never happened, so training on it teaches a model nothing
+except how to predict a constant.
+
+```python
+spots = pd.read_parquet("data/parking_spots.parquet")
+live  = spots.loc[~spots.feed_silent, "id"]
+occ   = occ[occ.parking_id.isin(live)]          # drops ~4.8% of rows
+```
+
+`last_free_at` lets you rebuild the flag for any as-of date rather than
+trusting ours: a lot is silent from the moment it stops appearing there.
+
+**Separately — the data is censored at the boundaries.** 25.2% of all rows are
+exactly 100 and 7.8% are exactly 0, and most of that is genuine: lots really
+do fill up. A plain regression will be biased at the edges; treat the target
+as bounded.
 
 ---
 
