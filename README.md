@@ -3,8 +3,8 @@
 > Open dataset of 30-minute parking occupancy snapshots for 210 municipal parking lots in Moscow, Russia.
 > Полностью открытый датасет занятости 210 муниципальных парковок Москвы с шагом 30 минут.
 
-[![License: CC BY 4.0](https://img.shields.io/badge/Data%20License-CC%20BY%204.0-lightgrey.svg)](./DATA_LICENSE)
-[![License: MIT](https://img.shields.io/badge/Code%20License-MIT-yellow.svg)](./LICENSE)
+[![License: CC BY 4.0](https://img.shields.io/badge/Data%20License-CC%20BY%204.0-lightgrey.svg)](./LICENSE)
+[![License: MIT](https://img.shields.io/badge/Code%20License-MIT-yellow.svg)](./LICENSE-CODE)
 
 ---
 
@@ -206,8 +206,9 @@ BibTeX:
 
 ## Licensing
 
-- **Code** in this repository (export scripts, notebooks, examples) — [MIT](./LICENSE).
-- **Data files** (`data/*.parquet`) — [Creative Commons Attribution 4.0](./DATA_LICENSE).
+- **Data files** (`data/*.parquet`) — [Creative Commons Attribution 4.0](./LICENSE),
+  with dataset-specific attribution terms in [`DATA_LICENSE`](./DATA_LICENSE).
+- **Code** in this repository (export scripts, notebooks, examples) — [MIT](./LICENSE-CODE).
 - **Source attribution:** the original occupancy values are obtained from public
   Moscow Department of Transport parking data. This dataset is a derivative work
   that aggregates, normalises, and republishes those values. Users redistributing
