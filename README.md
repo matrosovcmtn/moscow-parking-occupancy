@@ -1,7 +1,7 @@
 # Moscow Parking Occupancy Dataset
 
-> Open dataset of 30-minute parking occupancy snapshots for 209 municipal parking lots in Moscow, Russia.
-> Полностью открытый датасет занятости 209 муниципальных парковок Москвы с шагом 30 минут.
+> Open dataset of 30-minute parking occupancy snapshots for 210 municipal parking lots in Moscow, Russia.
+> Полностью открытый датасет занятости 210 муниципальных парковок Москвы с шагом 30 минут.
 
 [![License: CC BY 4.0](https://img.shields.io/badge/Data%20License-CC%20BY%204.0-lightgrey.svg)](./DATA_LICENSE)
 [![License: MIT](https://img.shields.io/badge/Code%20License-MIT-yellow.svg)](./LICENSE)
@@ -10,8 +10,8 @@
 
 ## TL;DR
 
-- **3.58 million** occupancy records
-- **209 parking lots** with 28,115 total spaces
+- **4.6 million** occupancy records
+- **210 parking lots** with 28,172 total spaces
 - **30-minute granularity**, continuous from **2025-03-31** onwards
 - **Parquet** format, sharded by month (~3–5 MB / file)
 - Source: Moscow Department of Transport public parking data
@@ -19,11 +19,32 @@
 
 ---
 
+## Why this dataset
+
+Long, dense, public occupancy series are rare. Most published work on parking
+occupancy prediction still leans on the UCI *Parking Birmingham* set, which
+covers **October–December 2016** only.
+
+This one is:
+
+- **continuous since 31 March 2025** and still growing — refreshed every Monday;
+- **30-minute granularity**, not hourly;
+- **210 lots in one city**, with capacity, coordinates and accessible-space
+  counts attached, so spatial and capacity effects can actually be modelled;
+- **reproducible** — the exact export script that produced these files is in
+  `scripts/`, and the upstream collector is open-sourced too.
+
+A companion feed for **Melbourne** (536 on-street sensor zones) is being
+collected by the same pipeline and may be published separately; that would make
+cross-city comparison possible on identical schema.
+
+---
+
 ## Contents
 
 | File | Description | Rows | Size |
 |---|---|---|---|
-| `data/parking_spots.parquet` | Static metadata: name, address, coordinates, capacity per parking | 209 | ~10 KB |
+| `data/parking_spots.parquet` | Static metadata: name, address, coordinates, capacity per parking | 210 | ~25 KB |
 | `data/occupancy_YYYY-MM.parquet` | Time-series occupancy snapshots, one file per month | ~256 k | ~3–5 MB |
 | `schema/parking_spots.schema.json` | JSON Schema for parking_spots | — | — |
 | `schema/occupancy.schema.json` | JSON Schema for occupancy | — | — |
