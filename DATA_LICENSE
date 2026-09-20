@@ -1,5 +1,14 @@
 Data License — Moscow Parking Occupancy Dataset
 
+This repository is licensed in two parts:
+
+  * code   (scripts, notebooks, examples) — MIT, see ./LICENSE
+  * data   (the `data/` directory)        — CC BY 4.0, this file
+
+The split is deliberate: MIT is a poor fit for data, and CC BY is a poor fit
+for code. GitHub shows only one licence for a repository and detects ./LICENSE,
+so the badge there says MIT — that badge describes the code, not the Dataset.
+
 The data files in the `data/` directory of this repository (the "Dataset")
 are licensed to you under the
 
