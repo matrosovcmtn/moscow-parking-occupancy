@@ -17,6 +17,33 @@ for the *schema* (dataset structure). Data refreshes use date-based tags.
 
 ---
 
+## [2026-11-12] — duplicate cleanup and a seven-day gap
+
+### Removed
+- 5446 extra occupancy rows in 2422 (lot, half-hour slot) groups. The old write
+  path stored a row per poll rather than per slot, so a slot could hold several
+  rows: 1353 groups held byte-identical repeats, 1069 held readings taken
+  minutes apart. One row per slot is kept — the last reading in the slot, which
+  matches what the collector now does on conflict. A decision journal was
+  written for every deleted row.
+
+### Changed
+- Eight monthly files re-exported from 2025-04 to 2026-09 as a result of the
+  cleanup, plus `parking_spots.parquet` and the November file.
+- Row count 5,103,138 -> 5,133,031. Lots 213, unchanged.
+- Figures in README, the dataset cards and the schema recomputed against this
+  release.
+
+### Known issue
+- No data between 2026-11-05 09:55 UTC and 2026-11-12 07:00 UTC. A CHECK
+  constraint requiring half-hour-aligned timestamps was deployed ahead of the
+  collector that produces them, every insert was rejected for seven days, and
+  the collector reported success in its log the whole time. Collection resumed
+  on 2026-11-12. The upstream API publishes current state only, so the week is
+  not recoverable.
+
+---
+
 ## [1.0.0] — 2026-05-29
 
 ### Added
