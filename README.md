@@ -12,7 +12,7 @@
 
 ## TL;DR
 
-- **5.13 million** occupancy records
+- **5.17 million** occupancy records
 - **213 parking lots** with 28,468 total spaces
 - **30-minute granularity**, continuous from **2025-03-31** onwards
 - **Parquet** format, sharded by month (~3–5 MB / file)
@@ -170,15 +170,15 @@ See [`CHANGELOG.md`](./CHANGELOG.md) for the history of releases.
 
 ---
 
-## Read this before modelling: 46 lots are not what they look like
+## Read this before modelling: 48 lots are not what they look like
 
-**22% of the Moscow lots report a constant zero free spaces.** That looks like
+**23% of the Moscow lots report a constant zero free spaces.** That looks like
 "completely full". It is not — the city registered these lots but does not
 publish their occupancy, or their sensor died.
 
-Measured on 2026-11-12: 46 of 213 lots reported no free space at all in the
+Measured on 2026-11-19: 48 of 213 lots reported no free space at all in the
 previous 30 days. Twenty-one of them never reported one in the entire
-history. The other twenty-five did once and then went quiet — a 606-space lot
+history. The other twenty-seven did once and then went quiet — a 606-space lot
 last showed a free space in April 2026, a 312-space lot at Vykhino in August
 2025, a 257-space lot near Sportivnaya in May 2026. A 606-space lot does not
 stay full for seven months.
@@ -191,13 +191,13 @@ except how to predict a constant.
 ```python
 spots = pd.read_parquet("data/parking_spots.parquet")
 live  = spots.loc[~spots.feed_silent, "id"]
-occ   = occ[occ.parking_id.isin(live)]          # drops 16.2% of rows
+occ   = occ[occ.parking_id.isin(live)]          # drops 17.0% of rows
 ```
 
 `last_free_at` lets you rebuild the flag for any as-of date rather than
 trusting ours: a lot is silent from the moment it stops appearing there.
 
-**Separately — the data is censored at the boundaries.** 25.7% of all rows are
+**Separately — the data is censored at the boundaries.** 25.8% of all rows are
 exactly 100 and 7.4% are exactly 0, and most of that is genuine: lots really
 do fill up. A plain regression will be biased at the edges; treat the target
 as bounded.
@@ -207,9 +207,9 @@ as bounded.
 ## Known quirks in the numbers themselves
 
 Three things will mislead you if you take the columns at face value. Every
-figure below is measured on the current release (5,133,031 rows).
+figure below is measured on the current release (5,168,635 rows).
 
-**1. `occupancy_rate` goes below zero in 19,785 rows (0.39%).** The minimum is
+**1. `occupancy_rate` goes below zero in 19,785 rows (0.38%).** The minimum is
 −1000. They sit in 27 lots between 18 May and 9 December 2025 and nowhere else.
 Before January 2026 the collector computed the percentage without clamping the
 free-space count to the declared capacity, so whenever the city reported more
@@ -218,7 +218,7 @@ was added in January 2026 and no later row is affected. The underlying
 `free_spaces` values are untouched, so nothing is lost:
 
 ```python
-occ = occ[occ.occupancy_rate >= 0]           # drops 0.39% of rows
+occ = occ[occ.occupancy_rate >= 0]           # drops 0.38% of rows
 ```
 
 **2. You cannot recompute `occupancy_rate` from `parking_spots`.** Its
@@ -236,10 +236,10 @@ declared = free_spaces / (1 - occupancy_rate / 100)
 ```
 
 **3. The accessible-space counter emits garbage.** `free_handicapped_spaces`
-exceeds the lot's declared accessible capacity in 131,008 rows (2.6%, 38 lots)
+exceeds the lot's declared accessible capacity in 131,639 rows (2.5%, 38 lots)
 and peaks at 9,979 free accessible spaces in a lot that declares 2 — lot 71, on
 17 June 2026. `free_spaces` likewise exceeds the declared common capacity in
-165,939 rows (3.2%, 58 lots). This is what the upstream API published; we keep
+166,936 rows (3.2%, 58 lots). This is what the upstream API published; we keep
 it rather than silently repairing it, but neither column is bounded by the
 capacity columns in `parking_spots`.
 

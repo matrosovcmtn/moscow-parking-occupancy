@@ -41,9 +41,11 @@ from dateutil.relativedelta import relativedelta
 LOG = logging.getLogger("export_from_db")
 
 # С 18.09.2026 в parking_spots не только Москва (появилась колонка city).
-# Датасет называется moscow-parking-occupancy и документирован как московский,
-# поэтому выгружаем ровно один город, а не всё, что есть в базе.
-DATASET_CITY = "moscow"
+# Выгружаем ровно один город, а не всё, что есть в базе: каждый датасет
+# описывает свой город, со своим источником, лицензией и смыслом колонок.
+# Город задаётся ключом --city; значение по умолчанию оставлено московским,
+# чтобы прежние вызовы, в том числе еженедельный refresh.sh, не менялись.
+DEFAULT_CITY = "moscow"
 
 # Подписи для сводки по аномалиям в конце прогона.
 LABELS = {
@@ -112,9 +114,9 @@ def iter_months(since: datetime, until: datetime) -> Iterator[MonthRange]:
         cursor = next_month
 
 
-def export_parking_spots(conn: psycopg.Connection, output: Path) -> int:
+def export_parking_spots(conn: psycopg.Connection, output: Path, city: str) -> int:
     LOG.info("Exporting parking_spots → %s", output)
-    df = pd.read_sql(PARKING_SPOTS_SQL, conn, params={"city": DATASET_CITY})
+    df = pd.read_sql(PARKING_SPOTS_SQL, conn, params={"city": city})
     df = df.astype(
         {
             "id": "int32",
@@ -141,6 +143,7 @@ def export_occupancy_month(
     conn: psycopg.Connection,
     month: MonthRange,
     output_dir: Path,
+    city: str,
 ) -> tuple[Path, int, dict[str, int]]:
     output = output_dir / f"occupancy_{month.label}.parquet"
     LOG.info("Exporting occupancy %s → %s", month.label, output.name)
@@ -148,7 +151,7 @@ def export_occupancy_month(
     df = pd.read_sql(
         OCCUPANCY_SQL,
         conn,
-        params={"start": month.start, "end": month.end, "city": DATASET_CITY},
+        params={"start": month.start, "end": month.end, "city": city},
     )
 
     if df.empty:
@@ -222,6 +225,15 @@ def parse_args() -> argparse.Namespace:
         help="Skip exporting parking_spots.parquet.",
     )
     p.add_argument(
+        "--city",
+        default=DEFAULT_CITY,
+        help=(
+            "Город в parking_spots.city. По умолчанию moscow, чтобы прежние "
+            "вызовы не менялись. Датасеты городов публикуются раздельно: у них "
+            "разные источники, лицензии и смысл колонок."
+        ),
+    )
+    p.add_argument(
         "--verbose",
         "-v",
         action="store_true",
@@ -257,7 +269,7 @@ def main() -> int:
 
     with psycopg.connect(args.db_url) as conn:
         if not args.skip_spots:
-            export_parking_spots(conn, args.output_dir / "parking_spots.parquet")
+            export_parking_spots(conn, args.output_dir / "parking_spots.parquet", args.city)
 
         # Auto-detect range if user didn't specify
         if args.since is None or args.until is None:
@@ -265,7 +277,7 @@ def main() -> int:
                 cur.execute(
                     "SELECT MIN(time), MAX(time) FROM parking_occupancy "
                     "WHERE parking_id IN (SELECT id FROM parking_spots WHERE city = %s)",
-                    (DATASET_CITY,),
+                    (args.city,),
                 )
                 row = cur.fetchone()
                 if not row or row[0] is None:
@@ -282,7 +294,7 @@ def main() -> int:
         total_rows = 0
         totals: dict[str, int] = {}
         for month in iter_months(args.since, args.until):
-            _, rows, anomalies = export_occupancy_month(conn, month, args.output_dir)
+            _, rows, anomalies = export_occupancy_month(conn, month, args.output_dir, args.city)
             total_rows += rows
             for key, count in anomalies.items():
                 totals[key] = totals.get(key, 0) + count
