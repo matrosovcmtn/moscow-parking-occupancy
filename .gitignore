@@ -34,3 +34,6 @@ data/scratch_*.parquet
 # Logs
 *.log
 logs/
+
+# id черновика Zenodo между сборкой и публикацией, живёт недолго
+.zenodo-draft

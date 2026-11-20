@@ -2,8 +2,14 @@
 """Выкладка датасета на Zenodo: запись, файлы, публикация, DOI.
 
 Запуск:
-    ZENODO_TOKEN=... python3 publish/zenodo_upload.py            # боевой
+    ZENODO_TOKEN=... python3 publish/zenodo_upload.py            # сразу с публикацией
+    ZENODO_TOKEN=... ZENODO_DRAFT=1 python3 ...                  # только черновик
+    ZENODO_TOKEN=... ZENODO_PUBLISH_DRAFT=1 python3 ...          # опубликовать черновик
     ZENODO_TOKEN=... ZENODO_HOST=sandbox.zenodo.org python3 ...  # песочница
+
+Опубликованную запись на Zenodo нельзя удалить, поэтому по умолчанию стоит
+сначала собрать черновик (ZENODO_DRAFT=1), открыть его ссылку глазами и только
+потом публиковать (ZENODO_PUBLISH_DRAFT=1). Черновик удаляется без следа.
 
 Токен делается на https://zenodo.org/account/settings/applications/tokens/new/
 и должен иметь ОБА права:
@@ -30,6 +36,7 @@ REPO = pathlib.Path(__file__).resolve().parent.parent
 HOST = os.environ.get("ZENODO_HOST", "zenodo.org")
 API = f"https://{HOST}/api"
 STATE = REPO / ".zenodo-deposition"
+DRAFT = REPO / ".zenodo-draft"
 
 
 def die(msg: str) -> None:
@@ -43,12 +50,34 @@ def check(resp, what: str, ok=(200, 201, 202)):
     return resp.json() if resp.content else {}
 
 
+def publish_deposition(auth: dict, dep_id: str) -> int:
+    """Публикует запись и печатает DOI. С этого момента её нельзя удалить."""
+    published = check(requests.post(f"{API}/deposit/depositions/{dep_id}/actions/publish",
+                                    headers=auth, timeout=300), "публикация")
+    STATE.write_text(str(dep_id) + "\n")
+    DRAFT.unlink(missing_ok=True)
+
+    doi = published.get("doi") or published.get("metadata", {}).get("doi", "")
+    concept = published.get("conceptdoi", "")
+    print(f"\nопубликовано: {published['links'].get('record_html', '')}")
+    print(f"DOI этой версии: {doi}")
+    if concept:
+        print(f"общий DOI записи (всегда последняя версия): {concept}")
+    return 0
+
+
 def main() -> int:
     token = os.environ.get("ZENODO_TOKEN")
     if not token:
         die("не задан ZENODO_TOKEN")
     auth = {"Authorization": f"Bearer {token}"}
     meta = json.loads((REPO / ".zenodo.json").read_text())
+
+    # Публикация черновика, собранного прошлым запуском с ZENODO_DRAFT=1.
+    if os.environ.get("ZENODO_PUBLISH_DRAFT") == "1":
+        if not DRAFT.exists():
+            die("нет .zenodo-draft: сначала запуск с ZENODO_DRAFT=1")
+        return publish_deposition(auth, DRAFT.read_text().strip())
 
     files = sorted(glob.glob(str(REPO / "data" / "*.parquet")))
     if not files:
@@ -89,17 +118,13 @@ def main() -> int:
                        headers={**auth, "Content-Type": "application/json"},
                        data=json.dumps({"metadata": meta}), timeout=120), "метаданные")
 
-    published = check(requests.post(f"{API}/deposit/depositions/{dep_id}/actions/publish",
-                                    headers=auth, timeout=300), "публикация")
-    STATE.write_text(str(dep_id) + "\n")
+    if os.environ.get("ZENODO_DRAFT") == "1":
+        DRAFT.write_text(str(dep_id) + "\n")
+        print(f"\nчерновик собран, не опубликован: {dep['links'].get('html', '')}")
+        print("проверить глазами, затем: ZENODO_PUBLISH_DRAFT=1")
+        return 0
 
-    doi = published.get("doi") or published.get("metadata", {}).get("doi", "")
-    concept = published.get("conceptdoi", "")
-    print(f"\nопубликовано: {published['links'].get('record_html', '')}")
-    print(f"DOI этой версии: {doi}")
-    if concept:
-        print(f"общий DOI записи (всегда последняя версия): {concept}")
-    return 0
+    return publish_deposition(auth, dep_id)
 
 
 if __name__ == "__main__":

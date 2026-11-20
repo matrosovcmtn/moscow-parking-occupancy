@@ -3,6 +3,7 @@
 > Open dataset of 30-minute parking occupancy snapshots for 213 municipal parking lots in Moscow, Russia.
 > Полностью открытый датасет занятости 213 муниципальных парковок Москвы с шагом 30 минут.
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.24405339.svg)](https://doi.org/10.5281/zenodo.24405339)
 [![License: CC BY 4.0](https://img.shields.io/badge/Data%20License-CC%20BY%204.0-lightgrey.svg)](./LICENSE)
 [![License: MIT](https://img.shields.io/badge/Code%20License-MIT-yellow.svg)](./LICENSE-CODE)
 [![Kaggle](https://img.shields.io/badge/Kaggle-dataset-20BEFF.svg)](https://www.kaggle.com/datasets/danilmatrosov/moscow-parking-occupancy)
@@ -36,9 +37,12 @@ This one is:
 - **reproducible** — the exact export script that produced these files is in
   `scripts/`, and the upstream collector is open-sourced too.
 
-A companion feed for **Melbourne** (536 on-street sensor zones) is being
-collected by the same pipeline and may be published separately; that would make
-cross-city comparison possible on identical schema.
+A companion dataset for **Melbourne** (536 on-street sensor zones, 1.41 million
+rows) is collected by the same pipeline and published separately:
+[GitHub](https://github.com/matrosovcmtn/melbourne-parking-occupancy),
+[`10.5281/zenodo.24405345`](https://doi.org/10.5281/zenodo.24405345). The schema
+is close but not identical: Moscow publishes car parks with a declared capacity,
+Melbourne publishes individual kerbside bay sensors aggregated into zones.
 
 ---
 
@@ -283,24 +287,31 @@ separately (see *Related repositories* below).
 
 ## Citation
 
-If you use this dataset in academic work, please cite:
+If you use this dataset in academic work, please cite the Zenodo record. The DOI
+below is the concept DOI: it always resolves to the newest version.
 
 ```
-Matrosov, D. (2026). Moscow Parking Occupancy Dataset. GitHub.
-https://github.com/matrosovcmtn/moscow-parking-occupancy
+Matrosov, D. (2026). Moscow Parking Occupancy Dataset [Data set]. Zenodo.
+https://doi.org/10.5281/zenodo.24405339
 ```
 
 BibTeX:
 
 ```bibtex
-@misc{matrosov2026moscowparking,
-  author       = {Matrosov, Danil},
-  title        = {Moscow Parking Occupancy Dataset},
-  year         = {2026},
-  publisher    = {GitHub},
-  howpublished = {\url{https://github.com/matrosovcmtn/moscow-parking-occupancy}}
+@dataset{matrosov2026moscowparking,
+  author    = {Matrosov, Danil},
+  title     = {Moscow Parking Occupancy Dataset},
+  year      = {2026},
+  publisher = {Zenodo},
+  doi       = {10.5281/zenodo.24405339},
+  url       = {https://doi.org/10.5281/zenodo.24405339}
 }
 ```
+
+The dataset grows every week, so results are only reproducible against a fixed
+snapshot. To pin one, cite its version DOI instead: the release of 20 November
+2026 is [`10.5281/zenodo.24405340`](https://doi.org/10.5281/zenodo.24405340), and every later
+version gets its own, listed on the Zenodo page.
 
 ---
 

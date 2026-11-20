@@ -25,6 +25,12 @@ cd "$REPO_DIR"
 
 echo "[$(date -u +%FT%TZ)] starting refresh in $REPO_DIR"
 
+# Без этого любой коммит, сделанный не на сервере, ломает выкатку: push уходит
+# в отказ, а крон узнаёт об этом только из журнала, которого никто не читает.
+# Ровно так датасет и стоял бы молча неделю после правки README с ноутбука.
+echo "  pulling remote changes"
+git pull --rebase --quiet origin main
+
 # Determine the two months we want to (re)export:
 # - current month (partial, overwritten each run)
 # - previous month (in case backfill or late-arriving data shifts the file)

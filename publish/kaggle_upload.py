@@ -28,8 +28,8 @@ from kagglehub.clients import KaggleApiV1Client
 from kagglehub.gcs_upload import normalize_patterns, upload_files_and_directories
 
 SLUG = "moscow-parking-occupancy"
-TITLE = "Moscow Parking Occupancy (4.6M snapshots)"
-SUBTITLE = "210 municipal lots, 30-minute granularity, since March 2025"
+TITLE = "Moscow Parking Occupancy (half-hourly, since 2025)"
+SUBTITLE = "213 municipal lots, 30-minute granularity, refreshed weekly since March 2025"
 UPLOAD_DIR = os.environ.get("KAGGLE_UPLOAD_DIR", "/tmp/kag/upload")
 
 DESCRIPTION_PATH = os.path.join(os.path.dirname(__file__), "kaggle", "description.md")
