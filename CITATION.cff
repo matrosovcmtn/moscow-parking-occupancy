@@ -1,0 +1,24 @@
+cff-version: 1.2.0
+message: "If you use this dataset, please cite it as below."
+type: dataset
+title: "Moscow Parking Occupancy Dataset"
+abstract: >-
+  5.17 million half-hourly occupancy observations for 213 municipal car parks in Moscow, continuous since 31 March 2025 and refreshed weekly. Long, dense, public parking-occupancy series are rare: most published work on occupancy prediction still relies on the UCI Parking Birmingham set, which covers three months of 2016. Collected from publicly accessible Moscow Department of Transport parking data; known data quirks are documented rather than cleaned away.
+authors:
+  - family-names: Matrosov
+    given-names: Danil
+    affiliation: ParkOut
+license: CC-BY-4.0
+repository-code: "https://github.com/matrosovcmtn/moscow-parking-occupancy"
+url: "https://github.com/matrosovcmtn/moscow-parking-occupancy"
+keywords:
+  - parking
+  - urban mobility
+  - smart city
+  - occupancy
+  - time series
+  - open data
+  - Moscow
+  - TimescaleDB
+date-released: 2026-11-20
+version: "2026-11-16"

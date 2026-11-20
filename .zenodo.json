@@ -1,0 +1,40 @@
+{
+  "upload_type": "dataset",
+  "title": "Moscow Parking Occupancy Dataset",
+  "creators": [
+    {
+      "name": "Matrosov, Danil",
+      "affiliation": "ParkOut"
+    }
+  ],
+  "description": "<p>5.17 million half-hourly occupancy observations for <strong>213 municipal car parks in Moscow</strong>, continuous since 31 March 2025 and refreshed weekly.</p><p>Long, dense, public parking-occupancy series are rare: most published work on occupancy prediction still relies on the UCI <em>Parking Birmingham</em> set, which covers October to December 2016 only. This one is longer, denser and still growing.</p><p><strong>Files.</strong> <code>occupancy_YYYY-MM.parquet</code>, one row per car park per 30-minute slot (time in UTC, parking_id, free_spaces, free_handicapped_spaces, occupancy_rate); <code>parking_spots.parquet</code>, static metadata for 213 lots with coordinates, declared capacity and a feed_silent flag.</p><p><strong>Known quirks are documented, not cleaned away:</strong> occupancy_rate is negative in 19,785 rows (0.38%) from a pre-2026 collector bug; 48 of 213 lots report a constant zero free spaces because the city registered them but publishes no occupancy; the accessible-space counter exceeds declared capacity in 131,639 rows. Full detail in the README.</p><p>Collected from publicly accessible Moscow Department of Transport parking data.</p>",
+  "access_right": "open",
+  "license": "cc-by-4.0",
+  "keywords": [
+    "parking",
+    "urban mobility",
+    "smart city",
+    "occupancy",
+    "time series",
+    "open data",
+    "Moscow",
+    "transportation"
+  ],
+  "related_identifiers": [
+    {
+      "identifier": "https://github.com/matrosovcmtn/moscow-parking-occupancy",
+      "relation": "isSupplementTo",
+      "scheme": "url"
+    },
+    {
+      "identifier": "https://www.kaggle.com/datasets/danilmatrosov/moscow-parking-occupancy",
+      "relation": "isIdenticalTo",
+      "scheme": "url"
+    },
+    {
+      "identifier": "https://huggingface.co/datasets/matrosovdani/moscow-parking-occupancy",
+      "relation": "isIdenticalTo",
+      "scheme": "url"
+    }
+  ]
+}
